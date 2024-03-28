@@ -8,7 +8,7 @@
 int main() {
 	FILE* file;
 	char* filename = "test.txt";
-	char buffer[PACKET_SIZE] = { 0 };
+	char buffer[PACKET_SIZE + 1]; // +1 for null terminator
 	char** packets = NULL;
 	int wordCtr = 0, sentenceCtr = 0, digitCtr = 0, numberCtr = 0;
 
@@ -18,44 +18,55 @@ int main() {
 	}
 	else {
 		fseek(file, 0, SEEK_END);
-		int length = ftell(file);
-		fseek(file, 0, SEEK_SET);
+		size_t fileSize = ftell(file);
+		rewind(file);
 
-		if (setvbuf(file, buffer, _IOFBF, PACKET_SIZE) != 0) {
-			printf("Tamponlama ayarlama basarisiz\n");
+
+		packets = (char**)malloc(MAX_PACKETS * sizeof(char*));
+		if (packets == NULL) {
+			printf("Memory allocation failed for packets\n");
 			exit(1);
 		}
-		else {
-			packets = (char**)malloc(MAX_PACKETS * sizeof(char*));
-			int packet_count = 0;
 
-			if (packets == NULL) {
-				printf("Bellek tahsisi basarisiz\n");
+		int packet_count = 0;
+		size_t bytes_read; // dosya ile ilgili veri boyutu iþlemleri için size_t
+
+		// Dosya tamponu oluþtur
+		if (setvbuf(file, NULL, _IOFBF, PACKET_SIZE) != 0) {
+			printf("Buffering failed\n");
+			exit(1);
+		}
+
+		while ((bytes_read = fread(buffer, sizeof(char),  PACKET_SIZE, file)) != 0) {
+			buffer[bytes_read] = '\0'; // Null terminate buffer
+			packets[packet_count] = (char*)malloc((bytes_read + 1) * sizeof(char)); // +1 for null terminator
+			if (packets[packet_count] == NULL) {
+				printf("Memory allocation failed for packet\n");
 				exit(1);
 			}
-			int buffer_index = 0;
 
-			size_t bytes_read;
-			while ((bytes_read = fread(buffer + buffer_index, 1, PACKET_SIZE - buffer_index, file)) > 0) {
-				buffer_index += bytes_read;
-				if (buffer_index >= PACKET_SIZE) {
-					packets[packet_count] = (char*)malloc(PACKET_SIZE);
-					memcpy(packets[packet_count], buffer, PACKET_SIZE);
-					packet_count++;
-
-					buffer_index = 0;
-
-					if (packet_count >= MAX_PACKETS)
-						break;
-				}
+			if (bytes_read >= PACKET_SIZE) {
+				memcpy(packets[packet_count], buffer, bytes_read);
+				//packets[packet_count][bytes_read] = '\0'; // Null terminate buffer
+				packet_count++;
 			}
-			for (int i = 0; i < packet_count; ++i) {
-				printf("package %d", i);
-
-				free(packets[i]);
-			}
-			free(packets);
+			
+			if (packet_count >= MAX_PACKETS || ftell(file) == fileSize)
+				break;
 		}
+
+
+		for (int i = 0; i < packet_count; i++) {
+			printf("Package %d,%s\n", i,packets[i]);
+		}
+
+		// Free dynamically allocated memory
+		for (int i = 0; i < packet_count; i++) {
+			free(packets[i]);
+		}
+		free(packets);
+
+		fclose(file);
 	}
 
 	return 0;
