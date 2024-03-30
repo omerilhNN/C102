@@ -64,45 +64,51 @@ int main() {
 
 
             while (token != NULL) {
-                if (*token != '\0' && (((*token == '\n' || isspace(*token)) && isupper(*(token + 1))) || (i == 0 && isupper(*token)) )) {
+                if (*token != '\0' && (((*token == '\n' || isspace(*token)) && isupper(*(token + 1))) || (i == 0 && (isupper(*token) || isupper(*(token+1)))) )) {
                     sentenceCtr++;
                 }
                 token = strtok_s(NULL, ".!?", &context); // Bir sonraki cümleyi al
             }
 
 
-                for (int j = 0; j < packet_length && packets[i][j] != '\0'; j++) {
-                    if (isspace(packets[i][j]) || ispunct(packets[i][j]) || packets[i][j] == '\n') {
-                        if ((j > 0 && (!isspace(packets[i][j - 1]) && !ispunct(packets[i][j - 1]) && !isdigit(packets[i][j - 1]))) 
-                            || (j > 1 && (!isspace(packets[i][j - 2]) && !ispunct(packets[i][j - 2]) && !isdigit(packets[i][j - 2])))) {
-                            wordCtr++; // Kelime sayýsýný artýr
-                        }
-                        /* if (j > 1 && !isspace(packets[i][j - 2]) && !ispunct(packets[i][j - 2]) && !isdigit(packets[i][j - 2]))
-                            wordCtr++;*/
-                        if (j > 1 && (isdigit(packets[i][j - 1]) && !isdigit(packets[i][j - 2])))
-                            digitCtr++;
-                        if (j > 1 && (isdigit(packets[i][j - 1]) && isdigit(packets[i][j - 2])))
-                            numberCtr++;
+            for (int j = 0; j < packet_length && packets[i][j] != '\0'; j++) {
+                if (isspace(packets[i][j]) || ispunct(packets[i][j]) || packets[i][j] == '\n') {
+                    if ((j > 0 && (!isspace(packets[i][j - 1]) && !ispunct(packets[i][j - 1]) && !isdigit(packets[i][j - 1])))) {
+                        wordCtr++; // Kelime sayýsýný artýr
                     }
-                    /*else if (i == packet_count - 1 && j == packet_length - 1) {
-                        if (!isspace(packets[i][j]) && !ispunct(packets[i][j])) {
-                            wordCtr++;
-                        }
-                    }*/
+                    if (j > 1 && (isdigit(packets[i][j - 1]) && !isdigit(packets[i][j - 2])))
+                        digitCtr++;
+                    if (j > 1 && (isdigit(packets[i][j - 1]) && isdigit(packets[i][j - 2])))
+                        numberCtr++;
                 }
+                else if (i == packet_count - 1 && j == packet_length - 1) {
+                    if (!isspace(packets[i][j]) && !ispunct(packets[i][j]) && !isdigit(packets[i][j])) {
+                        wordCtr++;
+                    }
+
+                    if (isdigit(packets[i][j]) && isdigit(packets[i][j - 1]))
+                        numberCtr++;
+
+                    if (isdigit(packets[i][j]) && !isdigit(packets[i][j - 1]))
+                        digitCtr++;
+                }
+            }
             }
     
         printf("Sentence count: %d\n", sentenceCtr);
         printf("Word count: %d\n", wordCtr);
         printf("Digit count: %d\n", digitCtr);
         printf("Number count: %d\n", numberCtr);
-        printf("File size: %d", length);
+        printf("File size: %d\n", length);
+        printf("-------------------\n");
+        for (int k = 0; k < packet_count; k++) {
+            printf("Package %d\n", k);
+            printf("%s\n\n", packets[k]);
+           
+        }
 
 
         free(packets);
         fclose(file);
         return 0;
 }
-
-    
-
