@@ -41,7 +41,7 @@ int main() {
                 exit(1);
             }
 
-           
+           //okunan byte paket boyutuna gecmisse ya da esitse
             if (bytes_read >= PACKET_SIZE) {
                 if (strcpy_s(packets[packet_count], bytes_read + 1, buffer) != 0) {
                     printf("String copy failed\n");
@@ -62,7 +62,7 @@ int main() {
             char* token = strtok_s(temp_package, ".!?", &context);
             int packet_length = strlen(packets[i]);
 
-
+            //packet[i] 'yi tokenize edip cumle mi degil mi kontrolu
             while (token != NULL) {
                 if (*token != '\0' && (((*token == '\n' || isspace(*token)) && isupper(*(token + 1))) || (i == 0 && (isupper(*token) || isupper(*(token+1)))) )) {
                     sentenceCtr++;
@@ -81,15 +81,15 @@ int main() {
                     if (j > 1 && (isdigit(packets[i][j - 1]) && isdigit(packets[i][j - 2])))
                         numberCtr++;
                 }
-                else if (i == packet_count - 1 && j == packet_length - 1) {
-                    if (!isspace(packets[i][j]) && !ispunct(packets[i][j]) && !isdigit(packets[i][j])) {
+                else if (i == packet_count - 1 && j == packet_length - 1) { //son kelime ya da sayı icin islem
+                    if (!isspace(packets[i][j]) && !ispunct(packets[i][j]) && !isdigit(packets[i][j])) { //bosluk - nokt - rakam degilse -> kelimedir
                         wordCtr++;
                     }
 
-                    if (isdigit(packets[i][j]) && isdigit(packets[i][j - 1]))
+                    if (isdigit(packets[i][j]) && isdigit(packets[i][j - 1])) //kendisi ve 1 onceki char rakam ise number
                         numberCtr++;
 
-                    if (isdigit(packets[i][j]) && !isdigit(packets[i][j - 1]))
+                    if (isdigit(packets[i][j]) && !isdigit(packets[i][j - 1])) //sadece kendisi rakam digit
                         digitCtr++;
                 }
             }
