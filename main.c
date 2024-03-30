@@ -3,8 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#define PACKET_SIZE 16
-#define MAX_PACKETS 16
+#define PACKET_SIZE 32
+#define MAX_PACKETS 32
 
 int main() {
     FILE* file;
@@ -17,7 +17,6 @@ int main() {
         printf("Error opening file\n");
         exit(1);
     }
-    else {
         fseek(file, 0, SEEK_END);
         int length = ftell(file);
         rewind(file);
@@ -42,12 +41,12 @@ int main() {
                 exit(1);
             }
 
-            if (strcpy_s(packets[packet_count], bytes_read + 1, buffer) != 0) {
-                printf("String copy failed\n");
-                exit(1);
-            }
+           
             if (bytes_read >= PACKET_SIZE) {
-                memcpy(packets[packet_count], buffer, bytes_read);
+                if (strcpy_s(packets[packet_count], bytes_read + 1, buffer) != 0) {
+                    printf("String copy failed\n");
+                    exit(1);
+                }
                 packets[packet_count][bytes_read] = '\0'; // Null terminate buffer
                 packet_count++;
             }
@@ -61,45 +60,43 @@ int main() {
             char* context = NULL;
             char* temp_package = strdup(packets[i]);//strtok_s adresteki asıl değeri değiştiriyor diye strdup ile kopyasını oluştur
             char* token = strtok_s(temp_package, ".!?", &context);
+            int packet_length = strlen(packets[i]);
+
 
             while (token != NULL) {
-                if ((*token != '\0' && ((*token == '\n' || isspace(*token))) && isupper(*(token + 1))) || (i == 0 && ( isupper(*token) || isupper(*(token+1))))) {
+                if (*token != '\0' && (((*token == '\n' || isspace(*token)) && isupper(*(token + 1))) || (i == 0 && isupper(*token)) )) {
                     sentenceCtr++;
                 }
                 token = strtok_s(NULL, ".!?", &context); // Bir sonraki cümleyi al
             }
 
-            free(temp_package);
-            free(token);
 
-            int packet_length = strlen(packets[i]);
-
-            for (int j = 0; j < packet_length && packets[i][j] != '\0'; j++) {
-                if (isspace(packets[i][j]) || ispunct(packets[i][j]) || packets[i][j] == '\n') {
-                    if (j > 0 && !isspace(packets[i][j - 1]) && !ispunct(packets[i][j - 1]) && !isdigit(packets[i][j-1])) {
-                        wordCtr++; // Kelime sayýsýný artýr
+                for (int j = 0; j < packet_length && packets[i][j] != '\0'; j++) {
+                    if (isspace(packets[i][j]) || ispunct(packets[i][j]) || packets[i][j] == '\n') {
+                        if ((j > 0 && (!isspace(packets[i][j - 1]) && !ispunct(packets[i][j - 1]) && !isdigit(packets[i][j - 1]))) 
+                            || (j > 1 && (!isspace(packets[i][j - 2]) && !ispunct(packets[i][j - 2]) && !isdigit(packets[i][j - 2])))) {
+                            wordCtr++; // Kelime sayýsýný artýr
+                        }
+                        /* if (j > 1 && !isspace(packets[i][j - 2]) && !ispunct(packets[i][j - 2]) && !isdigit(packets[i][j - 2]))
+                            wordCtr++;*/
+                        if (j > 1 && (isdigit(packets[i][j - 1]) && !isdigit(packets[i][j - 2])))
+                            digitCtr++;
+                        if (j > 1 && (isdigit(packets[i][j - 1]) && isdigit(packets[i][j - 2])))
+                            numberCtr++;
                     }
-                    if (j> 1 && isdigit(packets[i][j - 1]) && !isdigit(packets[i][j - 2]))
-                        digitCtr++;
-                    if (j > 1 && isdigit(packets[i][j - 1]) && isdigit(packets[i][j - 2]))
-                        numberCtr++;     
+                    /*else if (i == packet_count - 1 && j == packet_length - 1) {
+                        if (!isspace(packets[i][j]) && !ispunct(packets[i][j])) {
+                            wordCtr++;
+                        }
+                    }*/
                 }
-                //if (j == length - 1) {
-                //    //son karakter eðer harf ise
-                //    if (!isspace(packets[i][j]) && !ispunct(packets[i][j])) {
-                //        wordCtr++;
-                //    }
-                //}
             }
-            if (!isspace(packets[i][packet_length - 1]) && !ispunct(packets[i][packet_length - 1])) {
-                wordCtr++;
-            }
-        }
-    }
+    
         printf("Sentence count: %d\n", sentenceCtr);
         printf("Word count: %d\n", wordCtr);
         printf("Digit count: %d\n", digitCtr);
         printf("Number count: %d\n", numberCtr);
+        printf("File size: %d", length);
 
 
         free(packets);
